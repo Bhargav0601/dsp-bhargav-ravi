@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>House Price Prediction</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>House Price Prediction</h1>
+        <form id="predictionForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="GrLivArea">Above Ground Living Area (sq ft)</label>
+                    <input type="number" id="GrLivArea" name="GrLivArea" required min="400" max="5100">
+                </div>
+                
+                <div class="form-group">
+                    <label for="LotArea">Lot Size (sq ft)</label>
+                    <input type="number" id="LotArea" name="LotArea" required min="1450" max="57000">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="OverallQual">Overall Quality</label>
+                    <select id="OverallQual" name="OverallQual" required>
+                        <option value="">Select Quality</option>
+                        <option value="10">Very Excellent</option>
+                        <option value="9">Excellent</option>
+                        <option value="8">Very Good</option>
+                        <option value="7">Good</option>
+                        <option value="6">Above Average</option>
+                        <option value="5" selected>Average</option>
+                        <option value="4">Below Average</option>
+                        <option value="3">Fair</option>
+                        <option value="2">Poor</option>
+                        <option value="1">Very Poor</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="YearBuilt">Year Built</label>
+                    <select id="YearBuilt" name="YearBuilt" required>
+                        <option value="">Select Year</option>
+                        <script>
+                            for (let year = 2010; year >= 1879; year--) {
+                                document.write(`<option value="${year}">${year}</option>`);
+                            }
+                        </script>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="Neighborhood">Neighborhood</label>
+                    <select id="Neighborhood" name="Neighborhood" required>
+                        <option value="">Select Neighborhood</option>
+                        <option value="NAmes">North Ames</option>
+                        <option value="CollgCr">College Creek</option>
+                        <option value="OldTown">Old Town</option>
+                        <option value="Edwards">Edwards</option>
+                        <option value="Somerst">Somerset</option>
+                        <option value="NridgHt">Northridge Heights</option>
+                        <option value="StoneBr">Stone Brook</option>
+                        <option value="NoRidge">Northridge</option>
+                        <option value="Timber">Timberland</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="MSZoning">Zoning Class</label>
+                    <select id="MSZoning" name="MSZoning" required>
+                        <option value="">Select Zoning</option>
+                        <option value="RL">Residential Low Density</option>
+                        <option value="RM">Residential Medium Density</option>
+                        <option value="FV">Floating Village Residential</option>
+                        <option value="RH">Residential High Density</option>
+                        <option value="C">Commercial</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="BedroomAbvGr">Bedrooms</label>
+                    <select id="BedroomAbvGr" name="BedroomAbvGr" required>
+                        <option value="">Select Bedrooms</option>
+                        <script>
+                            for (let bedrooms = 0; bedrooms <= 6; bedrooms++) {
+                                document.write(`<option value="${bedrooms}">${bedrooms}</option>`);
+                            }
+                        </script>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="FullBath">Full Bathrooms</label>
+                    <select id="FullBath" name="FullBath" required>
+                        <option value="">Select Bathrooms</option>
+                        <script>
+                            for (let bathrooms = 0; bathrooms <= 4; bathrooms++) {
+                                document.write(`<option value="${bathrooms}">${bathrooms}</option>`);
+                            }
+                        </script>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit">Predict House Price</button>
+        </form>
+        
+        <div id="loading">
+            <p>Calculating your house price estimate...</p>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            const loadingDiv = document.getElementById('loading');
+            
+            resultDiv.style.display = 'none';
+            loadingDiv.style.display = 'block';
+            
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams(new FormData(this))
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingDiv.style.display = 'none';
+                resultDiv.style.display = 'block';
+                
+                if (data.status === 'error') {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = `<strong>Error:</strong> ${data.error}`;
+                } else {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        <strong>Estimated House Price:</strong> $${data.prediction.toLocaleString()}
+                        <p style="font-size:14px; margin-top:10px;">Based on your property details</p>
+                    `;
+                }
+            })
+            .catch(error => {
+                loadingDiv.style.display = 'none';
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+            });
+        });
+    </script>
+</body>
+</html>
